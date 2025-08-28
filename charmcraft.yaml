@@ -1,0 +1,58 @@
+# Copyright 2025 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: mysql-proxy
+title: MySQL database proxy
+summary: MySQL database proxy for uncharmed MySQL servers.
+description: |
+  MySQL database proxy for uncharmed MySQL servers.
+  
+  Enable charmed applications to communicate with uncharmed databases.
+
+type: charm
+base: ubuntu@24.04
+platforms:
+  amd64:
+
+parts:
+  proxy:
+    source: .
+    plugin: uv
+    build-snaps:
+      - astral-uv
+  # Create a version file and pack it into the charm. This is dynamically generated
+  # as part of the build process for a charm to ensure that the git revision of the
+  # charm is always recorded in this version file.
+  version-file:
+    plugin: nil
+    build-packages:
+      - git
+    override-build: |
+      VERSION=$(git -C $CRAFT_PART_SRC/../../proxy/src describe --always)
+      echo "Setting version to $VERSION"
+      echo $VERSION > $CRAFT_PART_INSTALL/version
+    stage:
+      - version
+
+provides:
+  database:
+    interface: mysql_client
+
+config:
+  options:
+    db-uri:
+      default:
+      type: secret
+      description: |
+        The secret id for db-uri. E.g. "secret:XXXXXXXXXXX" 
